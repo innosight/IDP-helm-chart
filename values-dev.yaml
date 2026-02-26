@@ -11,7 +11,7 @@ imagePullSecrets:
 service:
   type: NodePort
   port: 8080
-  nodePort: 30020
+  nodePort: 30021
 
 ingress:
   enabled: false
