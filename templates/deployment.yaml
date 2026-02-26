@@ -1,24 +1,52 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: IDP
-  namespace: default
+  name: {{ include "IDP.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "IDP.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: IDP
+      app: {{ include "IDP.fullname" . }}
   template:
     metadata:
       labels:
-        app: IDP
+        app: {{ include "IDP.fullname" . }}
     spec:
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- if .Values.imagePullSecrets }}
-        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
-        - name: IDP
+        - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
