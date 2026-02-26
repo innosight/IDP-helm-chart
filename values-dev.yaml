@@ -28,10 +28,11 @@ env:
   - name: SPRING_PROFILES_ACTIVE
     value: dev
 
-config:
-  applicationYaml: |
-    spring:
-      application:
-        name: IDP
-      profiles:
-        active: dev
+serviceMonitor:
+  enabled: true
+  interval: 15s
+  path: /actuator/prometheus
+  port: http
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
